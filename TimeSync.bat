@@ -1,0 +1,1 @@
+python C:\Users\takuya\Desktop\TimeSync\timesync.py
