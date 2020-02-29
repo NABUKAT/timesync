@@ -8,7 +8,7 @@ JJY(電波時計の標準電波)をシミュレートするPython3のスクリ�
 http://jjy.nict.go.jp/jjy/trans/index.html
 
 ## 必要なモジュール
-Python3標準のモジュール以外では以下が必要となります。  
+Python3の標準モジュール以外では以下が必要となります。  
 * numpy  
 * pyaudio
 
@@ -22,8 +22,6 @@ python timesync.py
 ※実行端末の時計が合っている必要があります。
 
 ## その他
-* TimeSync.bat  
-タスクスケジューラ登録用バッチファイル
 * wavemake.py  
 音声データ作成用スクリプト
 
