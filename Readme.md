@@ -26,4 +26,5 @@ python timesync.py
 音声データ作成用スクリプト
 
 ## 参考
-[JJYシミュレータWeb版](https://shogo82148.github.io/web-jjy/)
+[JJYシミュレータWeb版](https://shogo82148.github.io/web-jjy/)  
+[JJY(電波時計の標準電波)をPythonで発信する](http://noboke.sblo.jp/article/187217307.html)
