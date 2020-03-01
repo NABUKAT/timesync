@@ -43,11 +43,11 @@ def protocol_mgmt(now, t):
         send_wave(b)
     # 分(20m)
     elif t == 2:
-        b = 1 if math.floor(now.minute / 20) == 1 else 0
+        b = math.floor((now.minute % 40) / 20)
         send_wave(b)
     # 分(10m)
     elif t == 3:
-        b = 1 if math.floor(now.minute / 10) == 1 else 0
+        b = math.floor((now.minute % 20) / 10)
         send_wave(b)
     # ゼロ
     elif t == 4:
@@ -83,7 +83,7 @@ def protocol_mgmt(now, t):
         send_wave(b)
     # 時(10h)
     elif t == 13:
-        b = 1 if math.floor(now.hour / 10) == 1 else 0
+        b = math.floor((now.hour % 20) / 10)
         send_wave(b)
     # ゼロ
     elif t == 14:
@@ -121,7 +121,7 @@ def protocol_mgmt(now, t):
     # 通算日(100d)
     elif t == 23:
         yd = get_yearday(now)
-        b = 1 if math.floor(yd / 100) == 1 else 0
+        b = math.floor((yd % 200) / 100)
         send_wave(b)
     # ゼロ
     elif t == 24:
@@ -305,7 +305,7 @@ def get_uruu(now):
 def get_parity(now, pa):
     if pa == 1:
         b = math.floor(now.hour / 20)
-        b += 1 if math.floor(now.hour / 10) == 1 else 0
+        b += math.floor((now.hour % 20) / 10)
         b += math.floor((now.hour % 10) / 8)
         b += math.floor(((now.hour % 10) % 8) / 4)
         b += math.floor(((now.hour % 10) % 4) / 2)
@@ -313,8 +313,8 @@ def get_parity(now, pa):
         ret = b % 2
     elif pa == 2:
         b = math.floor(now.minute / 40)
-        b += 1 if math.floor(now.minute / 20) == 1 else 0
-        b += 1 if math.floor(now.minute / 10) == 1 else 0
+        b += math.floor((now.minute % 40) / 20)
+        b += math.floor((now.minute % 20) / 10)
         b += math.floor((now.minute % 10) / 8)
         b += math.floor(((now.minute % 10) % 8) / 4)
         b += math.floor(((now.minute % 10) % 4) / 2)
