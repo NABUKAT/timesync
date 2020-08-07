@@ -6,7 +6,7 @@ import struct
 # 共通定数
 f0 = 13333 # 音声の周波数
 fs = 44100 # サンプリング周波数(周波数の2倍以上)
-A = 10     # 振幅
+A = 1     # 振幅
 
 #--------------------
 # marker.wav作成
@@ -16,15 +16,8 @@ sec = 0.2
 y = []
 
 # サンプリング点数分繰り返す
-for n in range(int(fs * sec)): 
-    s = 0
-    # 基本周波数f0の奇数倍周波数の波を足し合わせ
-    for f in range(f0, fs // 2, 2 * f0):
-        b = A / (np.pi * (f / f0))
-        s = s + b * np.sin(2 * np.pi * f * n / fs) #f = f0, 3f0, 5f0...
-        if s > 1.0:  s = 1.0
-        if s < -1.0: s = -1.0
-        
+for n in np.arange(int(fs * sec)): 
+    s = A * np.sin(2 * np.pi * f0 * n / fs)
     y.append(s)
 
 # 16bit(65536値)符号付き整数に変換
@@ -48,15 +41,8 @@ sec = 0.8
 y = []
 
 # サンプリング点数分繰り返す
-for n in range(int(fs * sec)):
-    s = 0
-    # 基本周波数f0の奇数倍周波数の波を足し合わせ
-    for f in range(f0, fs // 2, 2 * f0):
-        b = A / (np.pi * (f / f0))
-        s = s + b * np.sin(2 * np.pi * f * n / fs) #f = f0, 3f0, 5f0...
-        if s > 1.0:  s = 1.0
-        if s < -1.0: s = -1.0
-        
+for n in np.arange(int(fs * sec)):
+    s = A * np.sin(2 * np.pi * f0 * n / fs)
     y.append(s)
 
 # 16bit(65536値)符号付き整数に変換
@@ -80,15 +66,8 @@ sec = 0.5
 y = []
 
 # サンプリング点数分繰り返す
-for n in range(int(fs * sec)):
-    s = 0
-    # 基本周波数f0の奇数倍周波数の波を足し合わせ
-    for f in range(f0, fs // 2, 2 * f0): 
-        b = A / (np.pi * (f / f0))
-        s = s + b * np.sin(2 * np.pi * f * n / fs) #f = f0, 3f0, 5f0...
-        if s > 1.0:  s = 1.0
-        if s < -1.0: s = -1.0
-        
+for n in np.arange(int(fs * sec)):
+    s = A * np.sin(2 * np.pi * f0 * n / fs)
     y.append(s)
 
 # 16bit(65536値)符号付き整数に変換
