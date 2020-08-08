@@ -7,15 +7,40 @@ import wave
 import pyaudio
 import os
 
+# 送信継続時間(分)
+xm = 50
+
 # スクリプトパス
 script_path = os.path.dirname(os.path.abspath(__file__))
 
-# 15分間電波送信する
-def sendwav_15m():
-    timer_mgmt(maxmin=15)
+# 音声再生用オブジェクト
+filepath_z = script_path + "/wav/zero.wav"
+filepath_o = script_path + "/wav/one.wav"
+filepath_m = script_path + "/wav/marker.wav"
+wf_z = None
+wf_o = None
+wf_m = None
+p = None
+stream = None
+chunk = 1024
+
+# x分間電波送信する
+def sendwav_xm(xm):
+    timer_mgmt(maxmin=xm)
 
 # タイマー管理
 def timer_mgmt(maxmin=15):
+    global wf_z, wf_o, wf_m, stream, p
+    wf_z = wave.open(filepath_z, "r")
+    wf_o = wave.open(filepath_o, "r")
+    wf_m = wave.open(filepath_m, "r")
+    p = pyaudio.PyAudio()
+    stream = p.open(format=p.get_format_from_width(wf_z.getsampwidth()),
+                    channels=wf_z.getnchannels(),
+                    rate=wf_z.getframerate(),
+                    frames_per_buffer=chunk,
+                    #output_device_index=4,
+                    output=True)
     cnt = 0
     nowsec = 0
     while True:
@@ -30,44 +55,52 @@ def timer_mgmt(maxmin=15):
                     break
             protocol_mgmt(now, new_nowsec)
             nowsec = new_nowsec
-        time.sleep(0.01)
+        time.sleep(0.001)    
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+    wf_z.close()
+    wf_o.close()
+    wf_m.close()
 
 # プロトコル管理
+nb = 0
 def protocol_mgmt(now, t):
+    global nb
     # マーカー
     if t == 0:
         send_wave(2)
+        nb = math.floor(now.minute / 40)
     # 分(40m)
     elif t == 1:
-        b = math.floor(now.minute / 40)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor((now.minute % 40) / 20)
     # 分(20m)
     elif t == 2:
-        b = math.floor((now.minute % 40) / 20)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor((now.minute % 20) / 10)
     # 分(10m)
     elif t == 3:
-        b = math.floor((now.minute % 20) / 10)
-        send_wave(b)
+        send_wave(nb)
     # ゼロ
     elif t == 4:
         send_wave(0)
+        nb = math.floor((now.minute % 10) / 8)
     # 分(8m)
     elif t == 5:
-        b = math.floor((now.minute % 10) / 8)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.minute % 10) % 8) / 4)
     # 分(4m)
     elif t == 6:
-        b = math.floor(((now.minute % 10) % 8) / 4)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.minute % 10) % 4) / 2)
     # 分(2m)
     elif t == 7:
-        b = math.floor(((now.minute % 10) % 4) / 2)
-        send_wave(b)
+        send_wave(nb)
+        nb = now.minute % 2
     # 分(1m)
     elif t == 8:
-        b = now.minute % 2
-        send_wave(b)
+        send_wave(nb)
     # ポジションマーカー
     elif t == 9:
         send_wave(3)
@@ -77,33 +110,33 @@ def protocol_mgmt(now, t):
     # ゼロ
     elif t == 11:
         send_wave(0)
+        nb = math.floor(now.hour / 20)
     # 時(20h)
     elif t == 12:
-        b = math.floor(now.hour / 20)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor((now.hour % 20) / 10)
     # 時(10h)
     elif t == 13:
-        b = math.floor((now.hour % 20) / 10)
-        send_wave(b)
+        send_wave(nb)
     # ゼロ
     elif t == 14:
         send_wave(0)
+        nb = math.floor((now.hour % 10) / 8)
     # 時(8h)
     elif t == 15:
-        b = math.floor((now.hour % 10) / 8)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.hour % 10) % 8) / 4)
     # 時(4h)
     elif t == 16:
-        b = math.floor(((now.hour % 10) % 8) / 4)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.hour % 10) % 4) / 2)
     # 時(2h)
     elif t == 17:
-        b = math.floor(((now.hour % 10) % 4) / 2)
-        send_wave(b)
+        send_wave(nb)
+        nb = now.hour % 2
     # 時(1h)
     elif t == 18:
-        b = now.hour % 2
-        send_wave(b)
+        send_wave(nb)
     # ポジションマーカー
     elif t == 19:
         send_wave(3)
@@ -113,76 +146,76 @@ def protocol_mgmt(now, t):
     # ゼロ
     elif t == 21:
         send_wave(0)
+        yd = get_yearday(now)
+        nb = math.floor(yd / 200)
     # 通算日(200d)
     elif t == 22:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor(yd / 200)
-        send_wave(b)
+        nb = math.floor((yd % 200) / 100)
     # 通算日(100d)
     elif t == 23:
-        yd = get_yearday(now)
-        b = math.floor((yd % 200) / 100)
-        send_wave(b)
+        send_wave(nb)
     # ゼロ
     elif t == 24:
         send_wave(0)
+        yd = get_yearday(now)
+        nb = math.floor((yd % 100) / 80)
     # 通算日(80d)
     elif t == 25:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor((yd % 100) / 80)
-        send_wave(b)
+        nb = math.floor(((yd % 100) % 80) / 40)
     # 通算日(40d)
     elif t == 26:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor(((yd % 100) % 80) / 40)
-        send_wave(b)
+        nb = math.floor(((yd % 100) % 40) / 20)
     # 通算日(20d)
     elif t == 27:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor(((yd % 100) % 40) / 20)
-        send_wave(b)
+        nb = math.floor(((yd % 100) % 20) / 10)
     # 通算日(10d)
     elif t == 28:
-        yd = get_yearday(now)
-        b = math.floor(((yd % 100) % 20) / 10)
-        send_wave(b)
+        send_wave(nb)
     # ポジションマーカー
     elif t == 29:
         send_wave(3)
+        yd = get_yearday(now)
+        nb = math.floor((yd % 10) / 8)
     # 通算日(8d)
     elif t == 30:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor((yd % 10) / 8)
-        send_wave(b)
+        nb = math.floor(((yd % 10) % 8) / 4)
     # 通算日(4d)
     elif t == 31:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor(((yd % 10) % 8) / 4)
-        send_wave(b)
+        nb = math.floor(((yd % 10) % 4) / 2)
     # 通算日(2d)
     elif t == 32:
+        send_wave(nb)
         yd = get_yearday(now)
-        b = math.floor(((yd % 10) % 4) / 2)
-        send_wave(b)
+        nb = yd % 2
     # 通算日(1d)
     elif t == 33:
-        yd = get_yearday(now)
-        b = yd % 2
-        send_wave(b)
+        send_wave(nb)
     # ゼロ
     elif t == 34:
         send_wave(0)
     # ゼロ
     elif t == 35:
         send_wave(0)
+        nb = get_parity(now, 1)
     # パリティ(PA1)
     elif t == 36:
-        b = get_parity(now, 1)
-        send_wave(b)
+        send_wave(nb)
+        nb = get_parity(now, 2)
     # パリティ(PA2)
     elif t == 37:
-        b = get_parity(now, 2)
-        send_wave(b)
+        send_wave(nb)
     # 予備ビット(SU1)
     elif t == 38:
         send_wave(0)
@@ -192,56 +225,56 @@ def protocol_mgmt(now, t):
     # 予備ビット(SU2)
     elif t == 40:
         send_wave(0)
+        nb = math.floor((now.year % 100) / 80)
     # 年(80y)
     elif t == 41:
-        b = math.floor((now.year % 100) / 80)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.year % 100) % 80) / 40)
     # 年(40y)
     elif t == 42:
-        b = math.floor(((now.year % 100) % 80) / 40)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.year % 100) % 40) / 20)
     # 年(20y)
     elif t == 43:
-        b = math.floor(((now.year % 100) % 40) / 20)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.year % 100) % 20) / 10)
     # 年(10y)
     elif t == 44:
-        b = math.floor(((now.year % 100) % 20) / 10)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor((now.year % 10) / 8)
     # 年(8y)
     elif t == 45:
-        b = math.floor((now.year % 10) / 8)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.year % 10) % 8) / 4)
     # 年(4y)
     elif t == 46:
-        b = math.floor(((now.year % 10) % 8) / 4)
-        send_wave(b)
+        send_wave(nb)
+        nb = math.floor(((now.year % 10) % 4) / 2)
     # 年(2y)
     elif t == 47:
-        b = math.floor(((now.year % 10) % 4) / 2)
-        send_wave(b)
+        send_wave(nb)
+        nb = now.year % 2
     # 年(1y)
     elif t == 48:
-        b = now.year % 2
-        send_wave(b)
+        send_wave(nb)
     # ポジションマーカー
     elif t == 49:
         send_wave(3)
+        wd = now.isoweekday() % 7
+        nb = math.floor(wd / 4)
     # 曜日(4w)
     elif t == 50:
+        send_wave(nb)
         wd = now.isoweekday() % 7
-        b = math.floor(wd / 4)
-        send_wave(b)
+        nb = math.floor((wd % 4) / 2)
     # 曜日(2w)
     elif t == 51:
+        send_wave(nb)
         wd = now.isoweekday() % 7
-        b = math.floor((wd % 4) / 2)
-        send_wave(b)
+        nb = wd % 2
     # 曜日(1w)
     elif t == 52:
-        wd = now.isoweekday() % 7
-        b = wd % 2
-        send_wave(b)
+        send_wave(nb)
     # うるう秒(LS1)
     elif t == 53:
         send_wave(0)
@@ -268,16 +301,16 @@ def protocol_mgmt(now, t):
 def send_wave(sig):
     if sig == 0:
         print("0", flush=True, end="")
-        play_wav(script_path + "/wav/zero.wav")
+        play_wav(sig)
     elif sig == 1:
         print("1", flush=True, end="")
-        play_wav(script_path + "/wav/one.wav")
+        play_wav(sig)
     elif sig == 2:
         print("M", flush=True, end="")
-        play_wav(script_path + "/wav/marker.wav")
+        play_wav(sig)
     elif sig == 3:
         print("P", flush=True, end="")
-        play_wav(script_path + "/wav/marker.wav")
+        play_wav(sig)
 
 # 通算日の計算
 def get_yearday(now):
@@ -323,23 +356,27 @@ def get_parity(now, pa):
     return ret
 
 # 電波データ(wav)の再生
-def play_wav(filepath):
-    chunk = 128
-    wf = wave.open(filepath, "r")
-    p = pyaudio.PyAudio()
-    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                    channels=wf.getnchannels(),
-                    rate=wf.getframerate(),
-                    frames_per_buffer=chunk,
-                    output=True)
-    data = wf.readframes(chunk)
-    while len(data) > 0:
-        stream.write(data)
-        data = wf.readframes(chunk)
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-    wf.close()
+def play_wav(sig):
+    global wf_z, wf_o, wf_m, stream, p
+    if sig == 0:
+        wf_z.setpos(0)
+        data = wf_z.readframes(chunk)
+        while len(data) > 0:
+            stream.write(data)
+            data = wf_z.readframes(chunk)
+    elif sig == 1:
+        wf_o.setpos(0)
+        data = wf_o.readframes(chunk)
+        while len(data) > 0:
+            stream.write(data)
+            data = wf_o.readframes(chunk)
+    else:
+        wf_m.setpos(0)
+        data = wf_m.readframes(chunk)
+        while len(data) > 0:
+            stream.write(data)
+            data = wf_m.readframes(chunk)
+    
 
 if __name__ == '__main__':
-    sendwav_15m()
+    sendwav_xm(xm)
