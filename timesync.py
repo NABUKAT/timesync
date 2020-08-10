@@ -8,7 +8,7 @@ import pyaudio
 import os
 
 # 送信継続時間(分)
-xm = 50
+xm = 15
 
 # スクリプトパス
 script_path = os.path.dirname(os.path.abspath(__file__))
